@@ -1,19 +1,87 @@
-import dpsLogo from './assets/DPS.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-function App() {
-	return (
-		<>
-			<div>
-				<a href="https://www.digitalproductschool.io/" target="_blank">
-					<img src={dpsLogo} className="logo" alt="DPS logo" />
-				</a>
-			</div>
-			<div className="home-card">
-				<p>Your solution goes here 😊</p>
-			</div>
-		</>
-	);
+interface Address {
+  address: string;
+  city: string;
+  state: string;
+  stateCode: string;
+  postalCode: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  country: string;
 }
+
+interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  maidenName: string;
+  age: number;
+  gender: string;
+  email: string;
+  phone: string;
+  username: string;
+  password: string;
+  birthDate: string;
+  image: string;
+  bloodGroup: string;
+  height: number;
+  weight: number;
+  eyeColor: string;
+  hair: {
+    color: string;
+    type: string;
+  };
+  ip: string;
+  address: Address;
+  macAddress: string;
+  university: string;
+  bank: {
+    cardExpire: string;
+    cardNumber: string;
+    cardType: string;
+    currency: string;
+    iban: string;
+  };
+  company: {
+    department: string;
+    name: string;
+    title: string;
+    address: Address;
+  };
+  ein: string;
+  ssn: string;
+  userAgent: string;
+  crypto: {
+    coin: string;
+    wallet: string;
+    network: string;
+  };
+  role: string;
+}
+
+const App: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  
+  useEffect(() => {
+    axios.get('https://dummyjson.com/users').then(response => {
+      setUsers(response.data.users);
+    });
+  }, []);
+
+  return (
+    <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box' }}>
+      <h1>User List</h1>
+      <ul>
+        {users.map(user => (
+          <li key={user.id}>{user.firstName} {user.lastName}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 export default App;
