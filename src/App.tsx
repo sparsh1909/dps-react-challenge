@@ -78,6 +78,7 @@ const App: React.FC = () => {
     });
   }, []);
 
+  // Debounce logic
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedNameFilter(nameFilter);
@@ -96,6 +97,25 @@ const App: React.FC = () => {
       filtered = filtered.filter(user => user.address.city === cityFilter);
     }
 
+    if (highlightOldest) {
+      const oldestInCity: { [key: string]: User } = {};
+      filtered.forEach(user => {
+        const birthDate = new Date(user.birthDate);
+        const city = user.address.city;
+
+        if (!oldestInCity[city] || birthDate < new Date(oldestInCity[city].birthDate)) {
+          oldestInCity[city] = user;
+        }
+      });
+
+      filtered = filtered.map(user => ({
+        ...user,
+        isOldest: oldestInCity[user.address.city]?.id === user.id,
+      }));
+    } else {
+      filtered = filtered.map(user => ({ ...user, isOldest: false }));
+    }
+
     setFilteredUsers(filtered);
   }, [debouncedNameFilter, cityFilter, users, highlightOldest]);
 
@@ -107,8 +127,20 @@ const App: React.FC = () => {
     setCityFilter(e.target.value);
   };
 
+  const handleHighlightOldestChange = () => {
+    setHighlightOldest(!highlightOldest);
+  };
 
   const cities = useMemo(() => Array.from(new Set(users.map(user => user.address.city))), [users]);
+
+  // Function to format date as dd.mm.yyyy
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); 
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+  };
 
   return (
     <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box' }}>
@@ -121,14 +153,26 @@ const App: React.FC = () => {
               placeholder="Name"
               value={nameFilter}
               onChange={handleNameFilterChange}
-              style={{ padding: '8px', fontSize: '16px', width: '150px' , backgroundColor: 'white', 
-			  border: '2px solid #000', 
-			  borderRadius: '4px'  }} 
+              style={{ padding: '8px', fontSize: '16px', width: '250px', backgroundColor: 'white', 
+              border: '2px solid #000', 
+              borderRadius: '12px'  }}
             />
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block' }}>City:</label>
-            <select value={cityFilter} onChange={handleCityFilterChange} style={{ padding: '8px', fontSize: '16px', width: '150px', backgroundColor: 'white', border: '2px solid #000', borderRadius: '4px' }}>  
+            <select 
+              value={cityFilter} 
+              onChange={handleCityFilterChange} 
+              style={{ 
+                padding: '8px', 
+                fontSize: '16px', 
+                width: '250px', 
+                backgroundColor: 'white', 
+                border: '2px solid #000', 
+                borderRadius: '12px',
+               appearance: 'auto'
+              }}
+            >
               <option value="">Select city</option>
               {cities.map((city, index) => (
                 <option key={index} value={city}>
@@ -137,21 +181,33 @@ const App: React.FC = () => {
               ))}
             </select>
           </div>
+          <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ marginRight: '0px', whiteSpace: 'nowrap' }}>
+              Highlight oldest per city
+            </label>
+            <input
+              type="checkbox"
+              checked={highlightOldest}
+              onChange={handleHighlightOldestChange}
+            />
+          </div>
         </div>
       </div>
-      
+      <div style={{ overflow: 'hidden', borderRadius: '20px', border: '2px solid black' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              <th style={{ padding: '8px', borderBottom: '2px solid white', borderRight: '2px solid white', textAlign: 'left', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>Name</th>
-              <th style={{ padding: '8px', borderBottom: '2px solid white', borderRight: '2px solid white', textAlign: 'left' }}>City</th> 
+              <th style={{ padding: '8px', borderBottom: '2px solid black', textAlign: 'left', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>Name</th>
+              <th style={{ padding: '8px', borderBottom: '2px solid black', textAlign: 'left' }}>City</th>
+              <th style={{ padding: '8px', borderBottom: '2px solid black', textAlign: 'left', borderTopRightRadius: '8px' }}>Birthday</th>
             </tr>
           </thead>
           <tbody>
             {filteredUsers.map(user => (
-              <tr key={user.id}>
-                <td style={{ padding: '8px', borderBottom: '1px solid white', borderRight: '1px solid white' }}>{user.firstName} {user.lastName}</td>
-                <td style={{ padding: '8px', borderBottom: '1px solid white', borderRight: '1px solid white' }}>{user.address.city || 'No city'}</td>
+              <tr key={user.id} style={{ backgroundColor: user.isOldest ? 'lightblue' : 'transparent' }}>
+                <td style={{ padding: '8px'}}>{user.firstName} {user.lastName}</td>
+                <td style={{ padding: '8px'}}>{user.address.city || 'No city'}</td>
+                <td style={{ padding: '8px' }}>{formatDate(user.birthDate)}</td>
               </tr>
             ))}
           </tbody>
@@ -161,9 +217,9 @@ const App: React.FC = () => {
             </tr>
           </tfoot>
         </table>
+      </div>
     </div>
   );
 };
 
 export default App;
-
