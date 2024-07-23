@@ -143,7 +143,28 @@ const App: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box' }}>
+    <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box', backgroundColor: '#f0f8ff' }}>
+      {/* Header Section */}
+      <header style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#007bff', // Blue background
+        color: 'white',
+        padding: '20px',
+        borderRadius: '8px',
+        marginBottom: '20px',
+		boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
+      }}>
+        <h1 style={{ margin: 0, fontSize: '24px' }}>Customer Relationship Management</h1>
+        <img
+          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQiEKZQ9Vdz9ul02y0LINkg7OcLWwNV0kkbXQ&s" 
+          alt="Logo"
+          style={{ borderRadius: '10%', width: '50px', height: '50px' }}
+        />
+      </header>
+
+      {/* Main Content */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', width: '100%' }}>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           <div style={{ flex: 1 }}>
@@ -154,8 +175,8 @@ const App: React.FC = () => {
               value={nameFilter}
               onChange={handleNameFilterChange}
               style={{ padding: '8px', fontSize: '16px', width: '250px', backgroundColor: 'white', 
-              border: '2px solid #000', 
-              borderRadius: '12px'  }}
+              border: '2px solid #007bff', 
+              borderRadius: '12px' }}
             />
           </div>
           <div style={{ flex: 1 }}>
@@ -168,9 +189,9 @@ const App: React.FC = () => {
                 fontSize: '16px', 
                 width: '250px', 
                 backgroundColor: 'white', 
-                border: '2px solid #000', 
+                border: '2px solid #007bff', 
                 borderRadius: '12px',
-               appearance: 'auto'
+                appearance: 'auto'
               }}
             >
               <option value="">Select city</option>
@@ -193,13 +214,13 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
-      <div style={{ overflow: 'hidden', borderRadius: '20px', border: '2px solid black' }}>
+      <div style={{ overflow: 'hidden', borderRadius: '20px', border: '2px solid #007bff' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              <th style={{ padding: '8px', borderBottom: '2px solid black', textAlign: 'left', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>Name</th>
-              <th style={{ padding: '8px', borderBottom: '2px solid black', textAlign: 'left' }}>City</th>
-              <th style={{ padding: '8px', borderBottom: '2px solid black', textAlign: 'left', borderTopRightRadius: '8px' }}>Birthday</th>
+              <th style={{ padding: '8px', borderBottom: '2px solid #007bff', textAlign: 'left', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>Name</th>
+              <th style={{ padding: '8px', borderBottom: '2px solid #007bff', textAlign: 'left' }}>City</th>
+              <th style={{ padding: '8px', borderBottom: '2px solid #007bff', textAlign: 'left', borderTopRightRadius: '8px' }}>Birthday</th>
             </tr>
           </thead>
           <tbody>
