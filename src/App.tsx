@@ -64,24 +64,40 @@ interface User {
 }
 
 const App: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
+	const [users, setUsers] = useState<User[]>([]);
+	const [nameFilter, setNameFilter] = useState('');
   
-  useEffect(() => {
-    axios.get('https://dummyjson.com/users').then(response => {
-      setUsers(response.data.users);
-    });
-  }, []);
-
-  return (
-    <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box' }}>
-      <h1>User List</h1>
-      <ul>
-        {users.map(user => (
-          <li key={user.id}>{user.firstName} {user.lastName}</li>
-        ))}
-      </ul>
-    </div>
-  );
-};
-
-export default App;
+	useEffect(() => {
+	  axios.get('https://dummyjson.com/users').then(response => {
+		setUsers(response.data.users);
+	  });
+	}, []);
+  
+	const handleNameFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	  setNameFilter(e.target.value);
+	};
+  
+	const filteredUsers = users.filter(user =>
+	  `${user.firstName} ${user.lastName}`.toLowerCase().includes(nameFilter.toLowerCase())
+	);
+  
+	return (
+	  <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box' }}>
+		<h1>User List</h1>
+		<input
+		  type="text"
+		  placeholder="Name"
+		  value={nameFilter}
+		  onChange={handleNameFilterChange}
+		  style={{ padding: '8px', fontSize: '16px', width: '150px' }}
+		/>
+		<ul>
+		  {filteredUsers.map(user => (
+			<li key={user.id}>{user.firstName} {user.lastName}</li>
+		  ))}
+		</ul>
+	  </div>
+	);
+  };
+  
+  export default App;
