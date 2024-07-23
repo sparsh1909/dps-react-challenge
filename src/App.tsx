@@ -143,18 +143,18 @@ const App: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box', backgroundColor: '#f0f8ff' }}>
+    <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box', backgroundColor: '#f0f8ff', minHeight: '100vh' }}>
       {/* Header Section */}
       <header style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#007bff', // Blue background
+        backgroundColor: '#007bff',
         color: 'white',
         padding: '20px',
         borderRadius: '8px',
         marginBottom: '20px',
-		boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
+        boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
       }}>
         <h1 style={{ margin: 0, fontSize: '24px' }}>Customer Relationship Management</h1>
         <img
@@ -164,35 +164,24 @@ const App: React.FC = () => {
         />
       </header>
 
-      {/* Main Content */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', width: '100%' }}>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block' }}>Name:</label>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <label style={{ display: 'block', marginBottom: '8px' }}>Name:</label>
             <input
               type="text"
               placeholder="Name"
               value={nameFilter}
               onChange={handleNameFilterChange}
-              style={{ padding: '8px', fontSize: '16px', width: '250px', backgroundColor: 'white', 
-              border: '2px solid #007bff', 
-              borderRadius: '12px' }}
+              style={{ padding: '10px', fontSize: '16px', width: '100%', backgroundColor: 'white', border: '2px solid #007bff', borderRadius: '8px' }}
             />
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block' }}>City:</label>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <label style={{ display: 'block', marginBottom: '8px' }}>City:</label>
             <select 
               value={cityFilter} 
               onChange={handleCityFilterChange} 
-              style={{ 
-                padding: '8px', 
-                fontSize: '16px', 
-                width: '250px', 
-                backgroundColor: 'white', 
-                border: '2px solid #007bff', 
-                borderRadius: '12px',
-                appearance: 'auto'
-              }}
+              style={{ padding: '10px', fontSize: '16px', width: '100%', backgroundColor: 'white', border: '2px solid #007bff', borderRadius: '8px', appearance: 'auto' }}
             >
               <option value="">Select city</option>
               {cities.map((city, index) => (
@@ -202,7 +191,7 @@ const App: React.FC = () => {
               ))}
             </select>
           </div>
-          <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '25px' }}>
             <label style={{ marginRight: '0px', whiteSpace: 'nowrap' }}>
               Highlight oldest per city
             </label>
@@ -214,29 +203,24 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
-      <div style={{ overflow: 'hidden', borderRadius: '20px', border: '2px solid #007bff' }}>
+      <div style={{ overflow: 'hidden', borderRadius: '8px', border: '2px solid #007bff', backgroundColor: 'white' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              <th style={{ padding: '8px', borderBottom: '2px solid #007bff', textAlign: 'left', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>Name</th>
-              <th style={{ padding: '8px', borderBottom: '2px solid #007bff', textAlign: 'left' }}>City</th>
-              <th style={{ padding: '8px', borderBottom: '2px solid #007bff', textAlign: 'left', borderTopRightRadius: '8px' }}>Birthday</th>
+              <th style={{ padding: '12px', borderBottom: '2px solid #007bff', textAlign: 'left', backgroundColor: '#e9f4ff', borderTopLeftRadius: '8px' }}>Name</th>
+              <th style={{ padding: '12px', borderBottom: '2px solid #007bff', textAlign: 'left', backgroundColor: '#e9f4ff' }}>City</th>
+              <th style={{ padding: '12px', borderBottom: '2px solid #007bff', textAlign: 'left', backgroundColor: '#e9f4ff', borderTopRightRadius: '8px' }}>Birthday</th>
             </tr>
           </thead>
           <tbody>
             {filteredUsers.map(user => (
               <tr key={user.id} style={{ backgroundColor: user.isOldest ? 'lightblue' : 'transparent' }}>
-                <td style={{ padding: '8px'}}>{user.firstName} {user.lastName}</td>
-                <td style={{ padding: '8px'}}>{user.address.city || 'No city'}</td>
-                <td style={{ padding: '8px' }}>{formatDate(user.birthDate)}</td>
+                <td style={{ padding: '12px' }}>{user.firstName} {user.lastName}</td>
+                <td style={{ padding: '12px' }}>{user.address.city || 'No city'}</td>
+                <td style={{ padding: '12px' }}>{formatDate(user.birthDate)}</td>
               </tr>
             ))}
           </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={3} style={{ borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}></td>
-            </tr>
-          </tfoot>
         </table>
       </div>
     </div>
