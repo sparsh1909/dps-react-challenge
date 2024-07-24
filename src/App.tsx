@@ -61,6 +61,7 @@ interface User {
     network: string;
   };
   role: string;
+  isOldest?: boolean;
 }
 
 const App: React.FC = () => {
