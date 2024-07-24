@@ -31,9 +31,9 @@ The application will then be accessible at http://localhost:3000.
 - src/: Contains the source code for the application.
 - App.tsx: The main application component.
 
-## Implementation Details
+# Implementation Details
 
-# State Management
+## State Management
 - Users: Stores the fetched user data.
 - Filtered Users: Stores the filtered user data based on applied filters.
 - Name Filter: Stores the current name filter value.
@@ -48,20 +48,20 @@ The application will then be accessible at http://localhost:3000.
 - Data Fetching
 - Data is fetched from the API endpoint https://dummyjson.com/users using axios. Error handling and loading states are managed to provide feedback to the user.
 
-# Debouncing
+## Debouncing
 A 1-second debounce is implemented for the name filter to optimize performance by reducing the number of filter operations.
 
-# Filtering and Highlighting
+## Filtering and Highlighting
 - Users are filtered based on the name and city filters. 
 - The oldest user in each city is highlighted if the "Highlight oldest per city" checkbox is checked.
 
-# Sorting
+## Sorting
 Sorting is implemented for the first name column. Clicking the column header toggles the sort direction.
 
-# Pagination
+## Pagination
 Pagination is implemented to display a subset of users per page. Navigation buttons allow the user to move between pages.
 
-# Component Breakdown
+## Component Breakdown
 - App Component
 The main component that encapsulates the entire application logic. It manages state, handles data fetching, implements filtering, sorting, and pagination.
 
