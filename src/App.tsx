@@ -71,11 +71,16 @@ const App: React.FC = () => {
   const [debouncedNameFilter, setDebouncedNameFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [highlightOldest, setHighlightOldest] = useState(false);
+  const [sortColumn, setSortColumn] = useState<keyof User | ''>('firstName'); // Default sorting column
+  const [sortAsc, setSortAsc] = useState<boolean>(true); // Default to ascending
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
+    setLoading(true);
     axios.get('https://dummyjson.com/users').then(response => {
       setUsers(response.data.users);
       setFilteredUsers(response.data.users);
+      setLoading(false); // Set loading to false after data is fetched
     });
   }, []);
 
@@ -117,8 +122,31 @@ const App: React.FC = () => {
       filtered = filtered.map(user => ({ ...user, isOldest: false }));
     }
 
+    // Sorting logic
+    if (sortColumn) {
+      filtered = filtered.sort((a, b) => {
+        let valueA, valueB;
+
+        if (sortColumn === 'firstName') {
+          valueA = a.firstName;
+          valueB = b.firstName;
+        } else if (sortColumn === 'lastName') {
+          valueA = a.lastName;
+          valueB = b.lastName;
+        } else {
+          return 0;
+        }
+
+        if (typeof valueA === 'string' && typeof valueB === 'string') {
+          return sortAsc ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+        }
+
+        return 0;
+      });
+    }
+
     setFilteredUsers(filtered);
-  }, [debouncedNameFilter, cityFilter, users, highlightOldest]);
+  }, [debouncedNameFilter, cityFilter, users, highlightOldest, sortColumn, sortAsc]);
 
   const handleNameFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNameFilter(e.target.value);
@@ -132,19 +160,64 @@ const App: React.FC = () => {
     setHighlightOldest(!highlightOldest);
   };
 
+  const handleSort = (column: keyof User) => {
+    if (sortColumn === column) {
+      setSortAsc(!sortAsc); // Toggle sorting direction
+    } else {
+      setSortColumn(column); // Set new sort column
+      setSortAsc(true); // Default to ascending
+    }
+  };
+
   const cities = useMemo(() => Array.from(new Set(users.map(user => user.address.city))), [users]);
 
   // Function to format date as dd.mm.yyyy
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0'); 
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     return `${day}.${month}.${year}`;
   };
 
+  const Spinner = () => (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      width: '100vw',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      backgroundColor: '#f0f8ff',
+      zIndex: 1000
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          border: '4px solid #f3f3f3',
+          borderRadius: '50%',
+          borderTop: '4px solid #007bff',
+          width: '40px',
+          height: '40px',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto'
+        }}></div>
+        <p>Loading...</p>
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}
+        </style>
+      </div>
+    </div>
+  );
+
   return (
-    <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box', backgroundColor: '#f0f8ff', minHeight: '100vh' }}>
+    <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box', backgroundColor: '#f0f8ff', minHeight: '100vh', position: 'relative' }}>
       {/* Header Section */}
       <header style={{
         display: 'flex',
@@ -204,26 +277,75 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
-      <div style={{ overflow: 'hidden', borderRadius: '8px', border: '2px solid #007bff', backgroundColor: 'white' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ padding: '12px', borderBottom: '2px solid #007bff', textAlign: 'left', backgroundColor: '#e9f4ff', borderTopLeftRadius: '8px' }}>Name</th>
-              <th style={{ padding: '12px', borderBottom: '2px solid #007bff', textAlign: 'left', backgroundColor: '#e9f4ff' }}>City</th>
-              <th style={{ padding: '12px', borderBottom: '2px solid #007bff', textAlign: 'left', backgroundColor: '#e9f4ff', borderTopRightRadius: '8px' }}>Birthday</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map(user => (
-              <tr key={user.id} style={{ backgroundColor: user.isOldest ? 'lightblue' : 'transparent' }}>
-                <td style={{ padding: '12px' }}>{user.firstName} {user.lastName}</td>
-                <td style={{ padding: '12px' }}>{user.address.city || 'No city'}</td>
-                <td style={{ padding: '12px' }}>{formatDate(user.birthDate)}</td>
+
+      {loading ? (
+        <Spinner />
+      ) : (
+        <div style={{ overflow: 'hidden', borderRadius: '8px', border: '2px solid #007bff', backgroundColor: 'white' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th
+                  style={{ 
+                    padding: '12px', 
+                    borderBottom: '2px solid #007bff', 
+                    textAlign: 'left', 
+                    backgroundColor: '#e9f4ff', 
+                    borderTopLeftRadius: '8px',
+                    position: 'relative',
+                  }}
+                >
+                  <span>Name</span>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontSize: '14px',
+                      color: sortColumn === 'firstName' ? 'black' : '#007bff',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => handleSort('firstName')}
+                  >
+                    {sortColumn === 'firstName' ? (sortAsc ? '▲' : '▼') : ''}
+                  </span>
+                </th>
+                <th
+                  style={{ 
+                    padding: '12px', 
+                    borderBottom: '2px solid #007bff', 
+                    textAlign: 'left', 
+                    backgroundColor: '#e9f4ff',
+                    position: 'relative',
+                  }}
+                >
+                  <span>City</span>
+                </th>
+                <th style={{ 
+                  padding: '12px', 
+                  borderBottom: '2px solid #007bff', 
+                  textAlign: 'left', 
+                  backgroundColor: '#e9f4ff', 
+                  borderTopRightRadius: '8px',
+                  position: 'relative',
+                }}>
+                  <span>Birthday</span>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filteredUsers.map(user => (
+                <tr key={user.id} style={{ backgroundColor: user.isOldest ? 'lightblue' : 'transparent' }}>
+                  <td style={{ padding: '12px' }}>{user.firstName} {user.lastName}</td>
+                  <td style={{ padding: '12px' }}>{user.address.city || 'No city'}</td>
+                  <td style={{ padding: '12px' }}>{formatDate(user.birthDate)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
