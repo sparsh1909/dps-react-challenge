@@ -74,14 +74,23 @@ const App: React.FC = () => {
   const [sortColumn, setSortColumn] = useState<keyof User | ''>('firstName'); // Default sorting column
   const [sortAsc, setSortAsc] = useState<boolean>(true); // Default to ascending
   const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState<string | null>(null); // Error state
+  const [currentPage, setCurrentPage] = useState(1); // Current page
+  const resultsPerPage = 10; // Number of results per page
 
   useEffect(() => {
     setLoading(true);
-    axios.get('https://dummyjson.com/users').then(response => {
-      setUsers(response.data.users);
-      setFilteredUsers(response.data.users);
-      setLoading(false); // Set loading to false after data is fetched
-    });
+    setError(null); // Reset error on new fetch attempt
+    axios.get('https://dummyjson.com/users')
+      .then(response => {
+        setUsers(response.data.users);
+        setFilteredUsers(response.data.users);
+        setLoading(false); // Set loading to false after data is fetched
+      })
+      .catch(error => {
+        setLoading(false); // Set loading to false on error
+        setError('Failed to fetch data. Please try again later.'); // Set error message
+      });
   }, []);
 
   // Debounce logic
@@ -216,6 +225,20 @@ const App: React.FC = () => {
     </div>
   );
 
+  const totalPages = Math.ceil(filteredUsers.length / resultsPerPage);
+
+  const getPaginatedUsers = () => {
+    const startIndex = (currentPage - 1) * resultsPerPage;
+    const endIndex = startIndex + resultsPerPage;
+    return filteredUsers.slice(startIndex, endIndex);
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box', backgroundColor: '#f0f8ff', minHeight: '100vh', position: 'relative' }}>
       {/* Header Section */}
@@ -280,71 +303,97 @@ const App: React.FC = () => {
 
       {loading ? (
         <Spinner />
+      ) : error ? (
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <p style={{ color: 'red' }}>{error}</p>
+        </div>
       ) : (
-        <div style={{ overflow: 'hidden', borderRadius: '8px', border: '2px solid #007bff', backgroundColor: 'white' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th
-                  style={{ 
+        <>
+          <div style={{ overflow: 'hidden', borderRadius: '8px', border: '2px solid #007bff', backgroundColor: 'white' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th
+                    style={{ 
+                      padding: '12px', 
+                      borderBottom: '2px solid #007bff', 
+                      textAlign: 'left', 
+                      backgroundColor: '#e9f4ff', 
+                      borderTopLeftRadius: '8px',
+                      position: 'relative',
+                    }}
+                  >
+                    <span>Name</span>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        right: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        fontSize: '14px',
+                        color: sortColumn === 'firstName' ? 'black' : '#007bff',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => handleSort('firstName')}
+                    >
+                      {sortColumn === 'firstName' ? (sortAsc ? '▲' : '▼') : ''}
+                    </span>
+                  </th>
+                  <th
+                    style={{ 
+                      padding: '12px', 
+                      borderBottom: '2px solid #007bff', 
+                      textAlign: 'left', 
+                      backgroundColor: '#e9f4ff',
+                      position: 'relative',
+                    }}
+                  >
+                    <span>City</span>
+                  </th>
+                  <th style={{ 
                     padding: '12px', 
                     borderBottom: '2px solid #007bff', 
                     textAlign: 'left', 
                     backgroundColor: '#e9f4ff', 
-                    borderTopLeftRadius: '8px',
+                    borderTopRightRadius: '8px',
                     position: 'relative',
-                  }}
-                >
-                  <span>Name</span>
-                  <span
-                    style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      fontSize: '14px',
-                      color: sortColumn === 'firstName' ? 'black' : '#007bff',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => handleSort('firstName')}
-                  >
-                    {sortColumn === 'firstName' ? (sortAsc ? '▲' : '▼') : ''}
-                  </span>
-                </th>
-                <th
-                  style={{ 
-                    padding: '12px', 
-                    borderBottom: '2px solid #007bff', 
-                    textAlign: 'left', 
-                    backgroundColor: '#e9f4ff',
-                    position: 'relative',
-                  }}
-                >
-                  <span>City</span>
-                </th>
-                <th style={{ 
-                  padding: '12px', 
-                  borderBottom: '2px solid #007bff', 
-                  textAlign: 'left', 
-                  backgroundColor: '#e9f4ff', 
-                  borderTopRightRadius: '8px',
-                  position: 'relative',
-                }}>
-                  <span>Birthday</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map(user => (
-                <tr key={user.id} style={{ backgroundColor: user.isOldest ? 'lightblue' : 'transparent' }}>
-                  <td style={{ padding: '12px' }}>{user.firstName} {user.lastName}</td>
-                  <td style={{ padding: '12px' }}>{user.address.city || 'No city'}</td>
-                  <td style={{ padding: '12px' }}>{formatDate(user.birthDate)}</td>
+                  }}>
+                    <span>Birthday</span>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {getPaginatedUsers().map(user => (
+                  <tr key={user.id} style={{ backgroundColor: user.isOldest ? 'lightblue' : 'transparent' }}>
+                    <td style={{ padding: '12px' }}>{user.firstName} {user.lastName}</td>
+                    <td style={{ padding: '12px' }}>{user.address.city || 'No city'}</td>
+                    <td style={{ padding: '12px' }}>{formatDate(user.birthDate)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{ padding: '10px 20px', margin: '0 5px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Previous
+            </button>
+            <span style={{ padding: '10px 20px', margin: '0 5px', fontSize: '16px' }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{ padding: '10px 20px', margin: '0 5px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
