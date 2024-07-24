@@ -6,13 +6,13 @@ This repository contains a Customer Relationship Management (CRM) web applicatio
 
 ## Features
 
-Fetches customer data from https://dummyjson.com/users.
-Filters customers by name and city.
-Highlights the oldest users per city.
-Supports sorting by first name.
-Implements pagination for customer data.
-Displays a loading spinner while fetching data.
-Handles error states gracefully.
+- Fetches customer data from https://dummyjson.com/users.
+- Filters customers by name and city.
+- Highlights the oldest users per city.
+- Supports sorting by first name.
+- Implements pagination for customer data.
+- Displays a loading spinner while fetching data.
+- Handles error states gracefully.
 
 ## Environment Setup
 
@@ -28,8 +28,8 @@ The application will then be accessible at http://localhost:3000.
 
 ## Project Structure
 
-src/: Contains the source code for the application.
-App.tsx: The main application component.
+- src/: Contains the source code for the application.
+- App.tsx: The main application component.
 
 ## Implementation Details
 
@@ -52,7 +52,8 @@ App.tsx: The main application component.
 A 1-second debounce is implemented for the name filter to optimize performance by reducing the number of filter operations.
 
 # Filtering and Highlighting
-Users are filtered based on the name and city filters. The oldest user in each city is highlighted if the "Highlight oldest per city" checkbox is checked.
+- Users are filtered based on the name and city filters. 
+- The oldest user in each city is highlighted if the "Highlight oldest per city" checkbox is checked.
 
 # Sorting
 Sorting is implemented for the first name column. Clicking the column header toggles the sort direction.
