@@ -1,68 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
-
-interface Address {
-  address: string;
-  city: string;
-  state: string;
-  stateCode: string;
-  postalCode: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  country: string;
-}
-
-interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
-  maidenName: string;
-  age: number;
-  gender: string;
-  email: string;
-  phone: string;
-  username: string;
-  password: string;
-  birthDate: string;
-  image: string;
-  bloodGroup: string;
-  height: number;
-  weight: number;
-  eyeColor: string;
-  hair: {
-    color: string;
-    type: string;
-  };
-  ip: string;
-  address: Address;
-  macAddress: string;
-  university: string;
-  bank: {
-    cardExpire: string;
-    cardNumber: string;
-    cardType: string;
-    currency: string;
-    iban: string;
-  };
-  company: {
-    department: string;
-    name: string;
-    title: string;
-    address: Address;
-  };
-  ein: string;
-  ssn: string;
-  userAgent: string;
-  crypto: {
-    coin: string;
-    wallet: string;
-    network: string;
-  };
-  role: string;
-  isOldest?: boolean;
-}
+import { fetchUsers } from './api/userApi';
+import Header from './components/Header';
+import Spinner from './components/Spinner';
+import Filters from './components/Filters';
+import UserTable from './components/UserTable';
+import Pagination from './components/Pagination';
+import { User } from './types';
 
 const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -71,37 +14,34 @@ const App: React.FC = () => {
   const [debouncedNameFilter, setDebouncedNameFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [highlightOldest, setHighlightOldest] = useState(false);
-  const [sortColumn, setSortColumn] = useState<keyof User | ''>('firstName'); // Default sorting column
-  const [sortAsc, setSortAsc] = useState<boolean>(true); // Default to ascending
-  const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState<string | null>(null); // Error state
-  const [currentPage, setCurrentPage] = useState(1); // Current page
-  const resultsPerPage = 10; // Number of results per page
+  const [sortColumn, setSortColumn] = useState<keyof User>('firstName');
+  const [sortAsc, setSortAsc] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsPerPage = 10;
 
   useEffect(() => {
-    setLoading(true);
-    setError(null); // Reset error on new fetch attempt
-    axios.get('https://dummyjson.com/users')
-      .then(response => {
-        setUsers(response.data.users);
-        setFilteredUsers(response.data.users);
-        setLoading(false); // Set loading to false after data is fetched
-      })
-      .catch(error => {
-        setLoading(false); // Set loading to false on error
-        setError('Failed to fetch data. Please try again later.'); // Set error message
-      });
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const users = await fetchUsers();
+        setUsers(users);
+        setFilteredUsers(users);
+      } catch {
+        setError('Failed to fetch data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // Debounce logic
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedNameFilter(nameFilter);
-    }, 1000); // 1 second debounce
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => setDebouncedNameFilter(nameFilter), 1000);
+    return () => clearTimeout(handler);
   }, [nameFilter]);
 
   useEffect(() => {
@@ -117,12 +57,10 @@ const App: React.FC = () => {
       filtered.forEach(user => {
         const birthDate = new Date(user.birthDate);
         const city = user.address.city;
-
         if (!oldestInCity[city] || birthDate < new Date(oldestInCity[city].birthDate)) {
           oldestInCity[city] = user;
         }
       });
-
       filtered = filtered.map(user => ({
         ...user,
         isOldest: oldestInCity[user.address.city]?.id === user.id,
@@ -131,25 +69,13 @@ const App: React.FC = () => {
       filtered = filtered.map(user => ({ ...user, isOldest: false }));
     }
 
-    // Sorting logic
     if (sortColumn) {
       filtered = filtered.sort((a, b) => {
-        let valueA, valueB;
-
-        if (sortColumn === 'firstName') {
-          valueA = a.firstName;
-          valueB = b.firstName;
-        } else if (sortColumn === 'lastName') {
-          valueA = a.lastName;
-          valueB = b.lastName;
-        } else {
-          return 0;
-        }
-
+        const valueA = a[sortColumn];
+        const valueB = b[sortColumn];
         if (typeof valueA === 'string' && typeof valueB === 'string') {
           return sortAsc ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
         }
-
         return 0;
       });
     }
@@ -157,242 +83,39 @@ const App: React.FC = () => {
     setFilteredUsers(filtered);
   }, [debouncedNameFilter, cityFilter, users, highlightOldest, sortColumn, sortAsc]);
 
-  const handleNameFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNameFilter(e.target.value);
-  };
-
-  const handleCityFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCityFilter(e.target.value);
-  };
-
-  const handleHighlightOldestChange = () => {
-    setHighlightOldest(!highlightOldest);
-  };
-
-  const handleSort = (column: keyof User) => {
-    if (sortColumn === column) {
-      setSortAsc(!sortAsc); // Toggle sorting direction
-    } else {
-      setSortColumn(column); // Set new sort column
-      setSortAsc(true); // Default to ascending
-    }
-  };
-
   const cities = useMemo(() => Array.from(new Set(users.map(user => user.address.city))), [users]);
 
-  // Function to format date as dd.mm.yyyy
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}.${month}.${year}`;
-  };
-
-  const Spinner = () => (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      width: '100vw',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      backgroundColor: '#f0f8ff',
-      zIndex: 1000
-    }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{
-          border: '4px solid #f3f3f3',
-          borderRadius: '50%',
-          borderTop: '4px solid #007bff',
-          width: '40px',
-          height: '40px',
-          animation: 'spin 1s linear infinite',
-          margin: '0 auto'
-        }}></div>
-        <p>Loading...</p>
-        <style>
-          {`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}
-        </style>
-      </div>
-    </div>
-  );
-
-  const totalPages = Math.ceil(filteredUsers.length / resultsPerPage);
-
-  const getPaginatedUsers = () => {
-    const startIndex = (currentPage - 1) * resultsPerPage;
-    const endIndex = startIndex + resultsPerPage;
-    return filteredUsers.slice(startIndex, endIndex);
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  const handlePageChange = (page: number) => setCurrentPage(page);
 
   return (
-    <div style={{ padding: '20px', width: '100vw', boxSizing: 'border-box', backgroundColor: '#f0f8ff', minHeight: '100vh', position: 'relative' }}>
-      {/* Header Section */}
-      <header style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#007bff',
-        color: 'white',
-        padding: '20px',
-        borderRadius: '8px',
-        marginBottom: '20px',
-        boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
-      }}>
-        <h1 style={{ margin: 0, fontSize: '24px' }}>Customer Relationship Management</h1>
-        <img
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQiEKZQ9Vdz9ul02y0LINkg7OcLWwNV0kkbXQ&s" 
-          alt="Logo"
-          style={{ borderRadius: '10%', width: '50px', height: '50px' }}
-        />
-      </header>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', width: '100%' }}>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '200px' }}>
-            <label style={{ display: 'block', marginBottom: '8px' }}>Name:</label>
-            <input
-              type="text"
-              placeholder="Name"
-              value={nameFilter}
-              onChange={handleNameFilterChange}
-              style={{ padding: '10px', fontSize: '16px', width: '100%', backgroundColor: 'white', border: '2px solid #007bff', borderRadius: '8px' }}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: '200px' }}>
-            <label style={{ display: 'block', marginBottom: '8px' }}>City:</label>
-            <select 
-              value={cityFilter} 
-              onChange={handleCityFilterChange} 
-              style={{ padding: '10px', fontSize: '16px', width: '100%', backgroundColor: 'white', border: '2px solid #007bff', borderRadius: '8px', appearance: 'auto' }}
-            >
-              <option value="">Select city</option>
-              {cities.map((city, index) => (
-                <option key={index} value={city}>
-                  {city}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '25px' }}>
-            <label style={{ marginRight: '0px', whiteSpace: 'nowrap' }}>
-              Highlight oldest per city
-            </label>
-            <input
-              type="checkbox"
-              checked={highlightOldest}
-              onChange={handleHighlightOldestChange}
-            />
-          </div>
-        </div>
-      </div>
-
+    <div className="app-container">
+      <Header />
+      <Filters
+        nameFilter={nameFilter}
+        cityFilter={cityFilter}
+        highlightOldest={highlightOldest}
+        cities={cities}
+        onNameChange={e => setNameFilter(e.target.value)}
+        onCityChange={e => setCityFilter(e.target.value)}
+        onHighlightChange={() => setHighlightOldest(!highlightOldest)}
+      />
       {loading ? (
         <Spinner />
       ) : error ? (
-        <div style={{ textAlign: 'center', padding: '20px' }}>
-          <p style={{ color: 'red' }}>{error}</p>
-        </div>
+        <div className="error-message">{error}</div>
       ) : (
         <>
-          <div style={{ overflow: 'hidden', borderRadius: '8px', border: '2px solid #007bff', backgroundColor: 'white' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th
-                    style={{ 
-                      padding: '12px', 
-                      borderBottom: '2px solid #007bff', 
-                      textAlign: 'left', 
-                      backgroundColor: '#e9f4ff', 
-                      borderTopLeftRadius: '8px',
-                      position: 'relative',
-                    }}
-                  >
-                    <span>Name</span>
-                    <span
-                      style={{
-                        position: 'absolute',
-                        right: '10px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        fontSize: '14px',
-                        color: sortColumn === 'firstName' ? 'black' : '#007bff',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => handleSort('firstName')}
-                    >
-                      {sortColumn === 'firstName' ? (sortAsc ? '▲' : '▼') : ''}
-                    </span>
-                  </th>
-                  <th
-                    style={{ 
-                      padding: '12px', 
-                      borderBottom: '2px solid #007bff', 
-                      textAlign: 'left', 
-                      backgroundColor: '#e9f4ff',
-                      position: 'relative',
-                    }}
-                  >
-                    <span>City</span>
-                  </th>
-                  <th style={{ 
-                    padding: '12px', 
-                    borderBottom: '2px solid #007bff', 
-                    textAlign: 'left', 
-                    backgroundColor: '#e9f4ff', 
-                    borderTopRightRadius: '8px',
-                    position: 'relative',
-                  }}>
-                    <span>Birthday</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {getPaginatedUsers().map(user => (
-                  <tr key={user.id} style={{ backgroundColor: user.isOldest ? 'lightblue' : 'transparent' }}>
-                    <td style={{ padding: '12px' }}>{user.firstName} {user.lastName}</td>
-                    <td style={{ padding: '12px' }}>{user.address.city || 'No city'}</td>
-                    <td style={{ padding: '12px' }}>{formatDate(user.birthDate)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              style={{ padding: '10px 20px', margin: '0 5px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            >
-              Previous
-            </button>
-            <span style={{ padding: '10px 20px', margin: '0 5px', fontSize: '16px' }}>
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              style={{ padding: '10px 20px', margin: '0 5px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            >
-              Next
-            </button>
-          </div>
+          <UserTable
+            users={filteredUsers.slice((currentPage - 1) * resultsPerPage, currentPage * resultsPerPage)}
+            sortColumn={sortColumn}
+            sortAsc={sortAsc}
+            onSort={setSortColumn}
+          />
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredUsers.length / resultsPerPage)}
+            onPageChange={handlePageChange}
+          />
         </>
       )}
     </div>
