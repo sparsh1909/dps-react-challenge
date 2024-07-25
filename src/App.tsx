@@ -87,8 +87,17 @@ const App: React.FC = () => {
 
   const handlePageChange = (page: number) => setCurrentPage(page);
 
+  const handleSort = (column: keyof User) => {
+    if (sortColumn === column) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortColumn(column);
+      setSortAsc(true);
+    }
+  };
+
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <Header />
       <Filters
         nameFilter={nameFilter}
@@ -109,7 +118,7 @@ const App: React.FC = () => {
             users={filteredUsers.slice((currentPage - 1) * resultsPerPage, currentPage * resultsPerPage)}
             sortColumn={sortColumn}
             sortAsc={sortAsc}
-            onSort={setSortColumn}
+            onSort={handleSort}
           />
           <Pagination
             currentPage={currentPage}
